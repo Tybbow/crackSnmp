@@ -6,7 +6,7 @@
 /*   By: tiskow <tiskow@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/06/15 09:41:03 by tiskow            #+#    #+#             */
-/*   Updated: 2018/06/18 13:24:20 by tiskow           ###   ########.fr       */
+/*   Updated: 2019/05/21 08:02:57 by tybbow           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -213,12 +213,8 @@ int		main(int ac, char **av)
 	t_snmp *snmp;
 
 	snmp = NULL;
-	if (ac != 3)
-		return (usage());
 	snmp = malloc(sizeof(t_snmp));
-	if (!snmp)
-		return (0);
-	if (!initSnmp(ac, av, &snmp))
+	if (ac != 3 || !snmp || !initSnmp(ac, av, &snmp))
 		return (usage());
 	launchSnmp(&snmp);
 	return (1);
