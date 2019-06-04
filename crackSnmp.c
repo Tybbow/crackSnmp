@@ -6,7 +6,7 @@
 /*   By: tiskow <tiskow@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/06/15 09:41:03 by tiskow            #+#    #+#             */
-/*   Updated: 2018/06/18 13:24:20 by tiskow           ###   ########.fr       */
+/*   Updated: 2019/05/24 09:38:03 by tybbow           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,7 +38,7 @@ struct                  s_snmp
 		u_char	MSGAUTHENGINEID[SIZEID];
 		u_char	K1[65];
 		u_char	K2[65];
-        char	dico[2000000];
+		int		read_fd;
 };
 
 
@@ -46,38 +46,6 @@ int		usage()
 {
 	printf("Usage: crackSnmp -f Dico\n");
 	return (0);
-}
-
-u_char    **ft_strsplit(u_char *str, char *c)
-{
-    u_char **split = NULL;
-    u_char *cs = NULL;
-    size_t i = 0;
-    size_t size = 1;
-
-    if (!str || !c)
-        return (NULL);
-    for (i = 0; (cs = strtok((char *)str, c)); i++)
-    {
-        if (size <= i + 1)
-        {
-            void *tmp = NULL;
-            size <<= 1;
-            tmp = realloc(split, sizeof(split) * size);
-            if (tmp)
-                split = tmp;
-            else
-            {
-                free(split);
-                split = NULL;
-                return (split);
-            }
-        }
-        split[i] = cs;
-        str = NULL;
-    }
-    split[i] = NULL;
-    return (split);
 }
 
 void passwdtomd5Key(u_char *password, u_int passwordlen, u_char *engineID, u_int engineLength, u_char *key)
@@ -162,24 +130,30 @@ void	launchSnmp(t_snmp **snmp)
 {
 	u_char 	**password;
 	u_char	secret[64] = {0};
+	u_char	buffer[4096] = {0};
 	int		i;
 
 	i = 0;
-	password = ft_strsplit((*snmp)->dico, "\n");
-	while (password[i])
+
+	while (read((*snmp)->read_fd, &buffer[i], 1) && i < 4096)
 	{
-		passwdtomd5Key(password[i], strlen(password[i]), (*snmp)->MSGAUTHENGINEID, 17, secret);
-		XorK1K2(snmp, secret, 64);
-		decryptSnmp(snmp, password[i]);
-		i++;
+		if (buffer[i] == '\n' || buffer[i] == 0)
+		{
+			buffer[i] = 0;
+			passwdtomd5Key(buffer, strlen(buffer), (*snmp)->MSGAUTHENGINEID, 17, secret);
+			XorK1K2(snmp, secret, 64);
+			decryptSnmp(snmp, buffer);
+			memset(buffer, 0, 4095);
+			i = 0;
+		}
+		else
+			i++;
 	}
-	free(password);
 }
 
 int		initSnmp(int ac, char **av, t_snmp **snmp)
 {
 	int ret;
-	int fd;
 
 	u_char	MSGENGINEID[SIZEID] = {0x80, 0x00, 0x1f, 0x88, 0x80, 0xe9, 
 	0xbd, 0x0c, 0x1d, 0x12, 0x66, 0x7a, 0x51, 0x00, 0x00, 0x00, 0x00};
@@ -200,11 +174,9 @@ int		initSnmp(int ac, char **av, t_snmp **snmp)
 	memcpy((*snmp)->MSGAUTHENGINEID, MSGENGINEID, SIZEID);
 	memcpy((*snmp)->WHOLEMESSAGE, WHOLE, SIZEWHOLE);
 
-	fd = open(av[2], O_RDONLY);
-	if (fd == -1 || strcmp(av[1], "-f"))
+	(*snmp)->read_fd = open(av[2], O_RDONLY);
+	if ((*snmp)->read_fd == -1 || strcmp(av[1], "-f"))
 		return (0);
-	read(fd, (*snmp)->dico, 1999999);
-	close(fd);
 	return (1);
 }
 
@@ -213,12 +185,8 @@ int		main(int ac, char **av)
 	t_snmp *snmp;
 
 	snmp = NULL;
-	if (ac != 3)
-		return (usage());
 	snmp = malloc(sizeof(t_snmp));
-	if (!snmp)
-		return (0);
-	if (!initSnmp(ac, av, &snmp))
+	if (ac != 3 || !snmp || !initSnmp(ac, av, &snmp))
 		return (usage());
 	launchSnmp(&snmp);
 	return (1);
