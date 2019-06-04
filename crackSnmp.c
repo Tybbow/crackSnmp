@@ -3,14 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   crackSnmp.c                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: tiskow <tiskow@student.42.fr>              +#+  +:+       +#+        */
+/*   By: tybbow <tybbow@gmail.com>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2018/06/15 09:41:03 by tiskow            #+#    #+#             */
-<<<<<<< HEAD
-/*   Updated: 2019/05/24 09:38:03 by tybbow           ###   ########.fr       */
-=======
-/*   Updated: 2019/05/21 08:02:57 by tybbow           ###   ########.fr       */
->>>>>>> e3011f9aae0394716a0af9420851ffdb10300174
+/*   Created: 2019/06/04 17:24:00 by tybbow            #+#    #+#             */
+/*   Updated: 2019/06/04 17:31:03 by tybbow           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -125,10 +121,10 @@ void	decryptSnmp(t_snmp **snmp, u_char *password)
 	MD5(tmpck2, 80, finalHash);
 	if (!memcmp(finalHash, cmp, 12))
 	{
-		printf(GRN "\n[!]" RST " Password find :" GRN " %s \n" RST, password);
+		printf(GRN "\n[+]" RST " Found Password :" GRN " %s \n" RST, password);
 		exit(1);
 	}
-	printf(GRN "[+] " RST "use password : %s\n", password);
+	printf(GRN "[!]" RST " Testing Password : %s\n", password);
 }
 void	launchSnmp(t_snmp **snmp)
 {
@@ -138,7 +134,6 @@ void	launchSnmp(t_snmp **snmp)
 	int		i;
 
 	i = 0;
-
 	while (read((*snmp)->read_fd, &buffer[i], 1) && i < 4096)
 	{
 		if (buffer[i] == '\n' || buffer[i] == 0)
@@ -148,10 +143,9 @@ void	launchSnmp(t_snmp **snmp)
 			XorK1K2(snmp, secret, 64);
 			decryptSnmp(snmp, buffer);
 			memset(buffer, 0, 4095);
-			i = 0;
+			i = -1;
 		}
-		else
-			i++;
+		i++;
 	}
 }
 
