@@ -6,7 +6,7 @@
 /*   By: tybbow <tybbow@gmail.com>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2019/06/04 17:24:00 by tybbow            #+#    #+#             */
-/*   Updated: 2019/06/04 17:31:03 by tybbow           ###   ########.fr       */
+/*   Updated: 2019/06/04 17:33:44 by tybbow           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -66,24 +66,24 @@ void passwdtomd5Key(u_char *password, u_int passwordlen, u_char *engineID, u_int
     	strcpy(bpass, password);
     	while (mylen < 8) 
 		{
-      		strcat(bpass, password);
-      		mylen += passwordlen;
-    	}
+			strcat(bpass, password);
+			mylen += passwordlen;
+		}
 		mypass = bpass;
-  	}
+	}
 
 	if (myelen > 32)
     	myelen = 32;
 
   	MD5_Init(&MD);
-  	while (count < 1048576) 
-  	{
-    	cp = password_buf;
-    	for (i = 0; i < 64; i++) 
-      		*cp++ = mypass[password_index++ % mylen];
-    	MD5_Update(&MD, password_buf, 64);
-    	count += 64;
-  	}
+	while (count < 1048576) 
+	{
+		cp = password_buf;
+		for (i = 0; i < 64; i++) 
+			*cp++ = mypass[password_index++ % mylen];
+		MD5_Update(&MD, password_buf, 64);
+		count += 64;
+	}
  	MD5_Final(key, &MD);
   	memcpy(password_buf, key, 16);
   	memcpy(password_buf + 16, engineID, myelen);
@@ -114,10 +114,10 @@ void	decryptSnmp(t_snmp **snmp, u_char *password)
 	0xac, 0x0a, 0x36, 0x6a};
 
 	memcpy(tmpck1, (*snmp)->K1, 64);
-    memcpy(tmpck1 + 64, (*snmp)->WHOLEMESSAGE, 131);
+	memcpy(tmpck1 + 64, (*snmp)->WHOLEMESSAGE, 131);
 	MD5(tmpck1, 131 + 64, key);
-    memcpy(tmpck2, (*snmp)->K2, 64);
-    memcpy(tmpck2 + 64, key, 16);
+	memcpy(tmpck2, (*snmp)->K2, 64);
+	memcpy(tmpck2 + 64, key, 16);
 	MD5(tmpck2, 80, finalHash);
 	if (!memcmp(finalHash, cmp, 12))
 	{
